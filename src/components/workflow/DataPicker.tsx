@@ -1,16 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
-import { Braces, ChevronRight } from 'lucide-react'
+import { ChevronRight, Tag } from 'lucide-react'
 
-export function DataPicker({ formKeys, disabled, onInsert }) {
+interface DataPickerProps {
+  formKeys: string[]
+  disabled?: boolean
+  onInsert: (snippet: string) => void
+}
+
+export function DataPicker({ formKeys, disabled, onInsert }: DataPickerProps) {
   const [open, setOpen] = useState(false)
-  const rootRef = useRef(null)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
-    function onDocMouseDown(e) {
-      if (!rootRef.current?.contains(e.target)) setOpen(false)
+    function onDocMouseDown(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
     }
-    function onKey(e) {
+    function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)
     }
     document.addEventListener('mousedown', onDocMouseDown)
@@ -31,16 +37,15 @@ export function DataPicker({ formKeys, disabled, onInsert }) {
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup="listbox"
-        title="Insert form field as {{form…}}"
+        title="Insert form answer"
         onClick={() => !disabled && setOpen((v) => !v)}
       >
-        <Braces size={14} strokeWidth={2.25} aria-hidden />
-        <span className="sr-only">Insert dynamic value</span>
+        <Tag size={13} strokeWidth={2.25} aria-hidden />
+        <span className="sr-only">Insert form answer</span>
       </button>
       {open && (
         <div className="data-picker-panel" role="listbox">
-          <div className="data-picker-head">Form fields</div>
-          <p className="data-picker-hint">Inserts <code>{'{{form.field}}'}</code> — filled at run time.</p>
+          <div className="data-picker-head">Form answers</div>
           <ul className="data-picker-list">
             {keys.map((k) => (
               <li key={k}>
@@ -53,7 +58,7 @@ export function DataPicker({ formKeys, disabled, onInsert }) {
                     setOpen(false)
                   }}
                 >
-                  <code className="data-picker-code">{`form.${k}`}</code>
+                  <span className="data-picker-key">{k}</span>
                   <ChevronRight size={14} className="data-picker-chev" aria-hidden />
                 </button>
               </li>

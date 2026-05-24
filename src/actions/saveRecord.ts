@@ -1,6 +1,7 @@
 import { interpolateConfig } from '../workflow/interpolate.js'
+import type { RunContext, RunResult, ActionDefinition } from '../workflow/model.js'
 
-export async function runSaveRecord(config, ctx = {}) {
+export async function runSaveRecord(config: Record<string, unknown>, ctx: RunContext = {}): Promise<RunResult> {
   const c = interpolateConfig(config, ctx)
   const table = String(c.table || '').trim()
   if (!table) return { ok: false, message: 'Add a table name.' }
@@ -21,9 +22,8 @@ export async function runSaveRecord(config, ctx = {}) {
   }
 }
 
-function parseFieldsText(text) {
-  /** @type {Record<string, string>} */
-  const out = {}
+function parseFieldsText(text: string): Record<string, string> {
+  const out: Record<string, string> = {}
   for (const line of text.split('\n')) {
     const idx = line.indexOf(':')
     if (idx === -1) continue
@@ -34,25 +34,21 @@ function parseFieldsText(text) {
   return out
 }
 
-function delay(ms) {
+function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-export const saveRecordAction = {
+export const saveRecordAction: ActionDefinition = {
   type: 'saveRecord',
   label: 'Save record',
   defaultConfig: { table: 'records', mode: 'create', fieldsText: 'status: new' },
+  run: runSaveRecord,
   fieldDefs: [
     { key: 'table', label: 'Table', input: 'text', placeholder: 'leads' },
-    {
-      key: 'mode',
-      label: 'Mode',
-      input: 'select',
-      options: ['create', 'upsert'],
-    },
+    { key: 'mode', label: 'Mode', input: 'select', options: ['create', 'upsert'] },
     {
       key: 'fieldsText',
-      label: 'Fields (use {{form.email}} for values)',
+      label: 'Fields',
       input: 'textarea',
       placeholder: 'email: {{form.email}}',
     },

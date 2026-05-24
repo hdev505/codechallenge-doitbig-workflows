@@ -1,6 +1,7 @@
 import { interpolateConfig } from '../workflow/interpolate.js'
+import type { RunContext, RunResult, ActionDefinition } from '../workflow/model.js'
 
-export async function runDeleteRecord(config, ctx = {}) {
+export async function runDeleteRecord(config: Record<string, unknown>, ctx: RunContext = {}): Promise<RunResult> {
   const c = interpolateConfig(config, ctx)
   const table = String(c.table || '').trim()
   if (!table) return { ok: false, message: 'Add a table name.' }
@@ -19,9 +20,8 @@ export async function runDeleteRecord(config, ctx = {}) {
   }
 }
 
-function parseFilterText(text) {
-  /** @type {Record<string, string>} */
-  const out = {}
+function parseFilterText(text: string): Record<string, string> {
+  const out: Record<string, string> = {}
   for (const line of text.split('\n')) {
     const idx = line.indexOf(':')
     if (idx === -1) continue
@@ -32,14 +32,15 @@ function parseFilterText(text) {
   return out
 }
 
-function delay(ms) {
+function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-export const deleteRecordAction = {
+export const deleteRecordAction: ActionDefinition = {
   type: 'deleteRecord',
   label: 'Delete record',
   defaultConfig: { table: '', filterText: 'id:\n' },
+  run: runDeleteRecord,
   fieldDefs: [
     { key: 'table', label: 'Table', input: 'text', placeholder: 'drafts' },
     {

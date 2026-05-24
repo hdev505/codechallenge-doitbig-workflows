@@ -34,11 +34,30 @@
 }
 
 .inspector {
-  width: 320px;
+  /* width is set inline via style prop — default 420px */
+  min-width: 300px;
+  max-width: 700px;
   border-left: 1px solid #d2d2d7;
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.inspector-resize-handle {
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 10;
+}
+
+.inspector-resize-handle:hover,
+.inspector-resize-handle:active {
+  background: rgba(37, 99, 235, 0.12);
+  border-radius: 4px;
 }
 
 .inspector-header {
@@ -47,6 +66,7 @@
   justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid #e5e5ea;
+  flex-shrink: 0;
 }
 
 .inspector-title {
@@ -186,26 +206,6 @@
   line-height: 1.45;
 }
 
-.inspector-hint {
-  margin: 0 0 18px;
-  padding: 10px 12px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #475569;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-}
-
-.inspector-hint code {
-  font-size: 11px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
-}
-
 .checkbox-row {
   display: flex;
   align-items: flex-start;
@@ -343,6 +343,12 @@
   color: #64748b;
 }
 
+/* Sortable list wrapper — the <li> from @dnd-kit */
+.step-card-wrapper {
+  display: block;
+  list-style: none;
+}
+
 .step-list {
   margin: 0;
   padding: 0;
@@ -365,16 +371,42 @@
   gap: 0;
 }
 
+/* Drag handle */
+.step-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  cursor: grab;
+  padding: 0;
+  touch-action: none;
+}
+
+.step-drag-handle:hover {
+  color: #94a3b8;
+  background: rgb(0 0 0 / 3%);
+}
+
+.step-drag-handle:active {
+  cursor: grabbing;
+}
+
 .step-index {
   font-size: 12px;
   font-weight: 700;
   color: #94a3b8;
-  width: 36px;
+  width: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f1f5f9;
   border-right: 1px solid var(--line, #e2e8f0);
+  border-left: 1px solid var(--line, #e2e8f0);
+  flex-shrink: 0;
 }
 
 .step-summary {
@@ -402,15 +434,23 @@
   letter-spacing: -0.02em;
 }
 
-.step-chev {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
 .step-card-body {
   padding: 12px 14px 14px;
   border-top: 1px solid var(--line, #e2e8f0);
   background: #fff;
+}
+
+/* Gate badge — shown when previous step is a condition */
+.step-gate-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  background: #fffbeb;
+  border-bottom: 1px solid #fde68a;
 }
 
 .field-block {
@@ -440,6 +480,7 @@
   background: #fff;
   color: var(--text, #0f172a);
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .field-input::placeholder {
@@ -623,22 +664,54 @@
   box-shadow: var(--shadow-sm, 0 1px 2px rgb(15 23 42 / 5%));
 }
 
-.iw-card-muted {
-  background: #f8fafc;
-  box-shadow: none;
-}
-
 .iw-card-last {
   margin-bottom: 0;
 }
 
-.iw-hint-tight {
-  margin: 0;
+/* Collapsible card variant */
+.iw-card-collapsible {
+  padding: 0;
+  overflow: hidden;
 }
 
-.iw-brace-mark {
-  font-family: ui-monospace, monospace;
-  font-weight: 600;
+.iw-card-collapse-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.iw-card-collapse-btn:hover {
+  background: #f8fafc;
+}
+
+.iw-card-collapse-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.iw-card-collapse-body {
+  padding: 0 14px 14px;
+}
+
+.iw-collapse-desc {
+  margin-bottom: 10px;
+  margin-top: 0;
+}
+
+.iw-card-chev {
+  display: flex;
+  color: #94a3b8;
+  flex-shrink: 0;
 }
 
 .iw-card-header {
@@ -661,6 +734,18 @@
   align-items: flex-start;
   min-width: 0;
   flex: 1;
+}
+
+/* Sticky actions header inside scrollable inspector */
+.iw-card-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #ffffff;
+  margin: -14px -16px 12px;
+  padding: 14px 16px 12px;
+  border-radius: 14px 14px 0 0;
+  border-bottom: 1px solid var(--line, #e2e8f0);
 }
 
 .iw-card-icon {
@@ -955,6 +1040,11 @@
   background: #fef2f2;
 }
 
+/* Interpolated text field */
+.interp-field {
+  position: relative;
+}
+
 .interp-field-head {
   display: flex;
   align-items: center;
@@ -967,6 +1057,66 @@
   margin-bottom: 0;
 }
 
+/* Wrapper needed for autocomplete dropdown positioning */
+.interp-input-wrap {
+  position: relative;
+}
+
+/* Validity indicators */
+.interp-validity {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.interp-validity-warn {
+  color: #b45309;
+}
+
+.interp-validity-ok {
+  color: #15803d;
+  font-style: italic;
+}
+
+/* Autocomplete dropdown */
+.ac-list {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 2px);
+  z-index: 40;
+  width: 100%;
+  max-height: 160px;
+  overflow: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgb(15 23 42 / 12%);
+}
+
+.ac-item {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text, #0f172a);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 7px;
+}
+
+.ac-item:hover {
+  background: #f1f5f9;
+  color: var(--accent, #2563eb);
+}
+
+/* DataPicker */
 .data-picker {
   position: relative;
   flex-shrink: 0;
@@ -976,10 +1126,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 7px;
   border: 1px solid var(--line, #e2e8f0);
   background: #fff;
   color: #64748b;
@@ -1003,8 +1153,8 @@
   right: 0;
   top: calc(100% + 6px);
   z-index: 30;
-  width: min(260px, 72vw);
-  padding: 10px 10px 8px;
+  width: min(220px, 80vw);
+  padding: 8px 8px 6px;
   border-radius: 12px;
   border: 1px solid var(--line, #e2e8f0);
   background: #fff;
@@ -1017,27 +1167,14 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #64748b;
-}
-
-.data-picker-hint {
-  margin: 6px 0 8px;
-  font-size: 11px;
-  line-height: 1.4;
-  color: #94a3b8;
-}
-
-.data-picker-hint code {
-  font-size: 10px;
-  padding: 1px 4px;
-  border-radius: 4px;
-  background: #f1f5f9;
+  padding: 2px 4px 6px;
 }
 
 .data-picker-list {
   margin: 0;
   padding: 0;
   list-style: none;
-  max-height: 200px;
+  max-height: 180px;
   overflow: auto;
 }
 
@@ -1047,9 +1184,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 7px 8px;
   border: none;
-  border-radius: 8px;
+  border-radius: 7px;
   background: transparent;
   font: inherit;
   cursor: pointer;
@@ -1061,9 +1198,9 @@
   background: #f1f5f9;
 }
 
-.data-picker-code {
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
+.data-picker-key {
+  font-size: 13px;
+  font-weight: 500;
   color: #0f172a;
 }
 
@@ -1076,6 +1213,7 @@
   color: var(--accent, #2563eb);
 }
 
+/* Action picker modal */
 .action-modal-root {
   position: fixed;
   inset: 0;
@@ -1106,8 +1244,8 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 420px;
-  max-height: min(88vh, 560px);
+  max-width: 480px;
+  max-height: min(88vh, 580px);
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -1225,6 +1363,17 @@
   box-shadow: 0 2px 8px rgb(37 99 235 / 8%);
 }
 
+/* Featured tiles */
+.action-tile-featured {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.action-tile-featured:hover {
+  border-color: #93c5fd;
+  background: #dbeafe;
+}
+
 .action-tile-icon {
   display: flex;
   align-items: center;
@@ -1242,6 +1391,12 @@
   border-color: #dbeafe;
   color: var(--accent, #2563eb);
   background: #eff6ff;
+}
+
+.action-tile-featured .action-tile-icon {
+  background: #fff;
+  border-color: #bfdbfe;
+  color: var(--accent, #2563eb);
 }
 
 .action-tile-text {
@@ -1269,12 +1424,4 @@
   font-size: 11px;
   color: #94a3b8;
   line-height: 1.45;
-}
-
-.action-modal-footnote code {
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: #f1f5f9;
-  color: #475569;
 }

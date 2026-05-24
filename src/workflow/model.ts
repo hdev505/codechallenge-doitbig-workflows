@@ -1,41 +1,76 @@
-/** @typedef {{ id: string, type: string, config: Record<string, unknown>, continueOnError?: boolean }} WorkflowStep */
-/** @typedef {{ version: number, trigger: 'submit', continueOnError?: boolean, steps: WorkflowStep[] }} Workflow */
+export interface WorkflowStep {
+  id: string
+  type: string
+  config: Record<string, unknown>
+  continueOnError?: boolean
+}
+
+export interface Workflow {
+  version: number
+  trigger: 'submit'
+  continueOnError?: boolean
+  steps: WorkflowStep[]
+}
+
+export interface RunContext {
+  form?: Record<string, string>
+}
+
+export interface RunResult {
+  ok: boolean
+  message: string
+  detail?: unknown
+}
+
+export type FieldInputType = 'text' | 'textarea' | 'select' | 'formField'
+
+export interface FieldDef {
+  key: string
+  label: string
+  input: FieldInputType
+  placeholder?: string
+  options?: string[]
+}
+
+export interface ActionDefinition {
+  type: string
+  label: string
+  defaultConfig: Record<string, unknown>
+  fieldDefs: FieldDef[]
+  run: (config: Record<string, unknown>, ctx: RunContext) => Promise<RunResult>
+}
 
 export const WORKFLOW_VERSION = 2
 
-export function newStepId() {
+export function newStepId(): string {
   return `step_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 
-/** @returns {Workflow} */
-export function createEmptyWorkflow() {
+export function createEmptyWorkflow(): Workflow {
   return { version: WORKFLOW_VERSION, trigger: 'submit', continueOnError: false, steps: [] }
 }
 
-/** @param {Workflow} workflow */
-export function cloneWorkflow(workflow) {
-  return JSON.parse(JSON.stringify(workflow))
+export function cloneWorkflow(workflow: Workflow): Workflow {
+  return JSON.parse(JSON.stringify(workflow)) as Workflow
 }
 
-export function storageKeyForButton(buttonId) {
+export function storageKeyForButton(buttonId: string): string {
   return `workflow:${buttonId}`
 }
 
-/** @param {unknown} parsed */
-function migrateWorkflow(parsed) {
+function migrateWorkflow(parsed: unknown): Workflow {
   if (!parsed || typeof parsed !== 'object') return createEmptyWorkflow()
-  const p = /** @type {Record<string, unknown>} */ (parsed)
+  const p = parsed as Record<string, unknown>
   if (p.trigger !== 'submit' || !Array.isArray(p.steps)) return createEmptyWorkflow()
 
   const version = Number(p.version) || 1
   if (version > WORKFLOW_VERSION) return createEmptyWorkflow()
 
-  /** @type {Workflow} */
-  const base = {
+  const base: Workflow = {
     version: WORKFLOW_VERSION,
     trigger: 'submit',
     continueOnError: typeof p.continueOnError === 'boolean' ? p.continueOnError : false,
-    steps: /** @type {WorkflowStep[]} */ (p.steps),
+    steps: p.steps as WorkflowStep[],
   }
 
   if (version === 1) {
@@ -53,25 +88,22 @@ function migrateWorkflow(parsed) {
   return base
 }
 
-/** @param {string} buttonId */
-export function loadWorkflowFromStorage(buttonId) {
+export function loadWorkflowFromStorage(buttonId: string): Workflow {
   try {
     const raw = localStorage.getItem(storageKeyForButton(buttonId))
     if (!raw) return createEmptyWorkflow()
-    const parsed = JSON.parse(raw)
+    const parsed = JSON.parse(raw) as unknown
     return migrateWorkflow(parsed)
   } catch {
     return createEmptyWorkflow()
   }
 }
 
-/** @param {string} buttonId @param {Workflow} workflow */
-export function saveWorkflowToStorage(buttonId, workflow) {
+export function saveWorkflowToStorage(buttonId: string, workflow: Workflow): void {
   localStorage.setItem(storageKeyForButton(buttonId), JSON.stringify(workflow))
 }
 
-/** @type {Record<string, () => Workflow>} */
-export const TEMPLATES = {
+export const TEMPLATES: Record<string, () => Workflow> = {
   sendToApi: () => ({
     version: WORKFLOW_VERSION,
     trigger: 'submit',

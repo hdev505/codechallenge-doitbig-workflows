@@ -1,6 +1,7 @@
 import { interpolateConfig } from '../workflow/interpolate.js'
+import type { RunContext, RunResult, ActionDefinition } from '../workflow/model.js'
 
-export async function runSendEmail(config, ctx = {}) {
+export async function runSendEmail(config: Record<string, unknown>, ctx: RunContext = {}): Promise<RunResult> {
   const c = interpolateConfig(config, ctx)
   const to = String(c.to || '').trim()
   const subject = String(c.subject || '').trim()
@@ -15,14 +16,15 @@ export async function runSendEmail(config, ctx = {}) {
   }
 }
 
-function delay(ms) {
+function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-export const sendEmailAction = {
+export const sendEmailAction: ActionDefinition = {
   type: 'sendEmail',
   label: 'Send email',
   defaultConfig: { to: '', subject: '', body: '' },
+  run: runSendEmail,
   fieldDefs: [
     { key: 'to', label: 'To', input: 'text', placeholder: 'name@…' },
     { key: 'subject', label: 'Subject', input: 'text', placeholder: '…' },

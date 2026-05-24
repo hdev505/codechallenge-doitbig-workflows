@@ -1,6 +1,7 @@
 import { interpolateFormValue } from '../workflow/interpolate.js'
+import type { RunContext, RunResult, ActionDefinition } from '../workflow/model.js'
 
-export async function runCondition(config, ctx = {}) {
+export async function runCondition(config: Record<string, unknown>, ctx: RunContext = {}): Promise<RunResult> {
   const fieldKey = String(config.fieldKey || '').trim()
   if (!fieldKey) return { ok: false, message: 'Choose which form field to check.' }
 
@@ -21,7 +22,7 @@ export async function runCondition(config, ctx = {}) {
   }
 }
 
-function evaluateCondition(actual, op, value) {
+function evaluateCondition(actual: string, op: string, value: string): boolean {
   switch (op) {
     case 'is_empty':
       return actual.trim() === ''
@@ -38,19 +39,20 @@ function evaluateCondition(actual, op, value) {
   }
 }
 
-function delay(ms) {
+function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-export const conditionAction = {
+export const conditionAction: ActionDefinition = {
   type: 'condition',
-  label: 'If condition',
+  label: 'Only if\u2026',
   defaultConfig: { fieldKey: 'plan', op: 'equals', value: 'pro' },
+  run: runCondition,
   fieldDefs: [
     {
       key: 'fieldKey',
       label: 'Form field',
-      input: 'text',
+      input: 'formField',
       placeholder: 'e.g. plan, email, country',
     },
     {
@@ -63,7 +65,7 @@ export const conditionAction = {
       key: 'value',
       label: 'Compare to (optional for empty checks)',
       input: 'text',
-      placeholder: 'Literal or {{form.other}}',
+      placeholder: 'Literal value or form answer',
     },
   ],
 }

@@ -5,23 +5,23 @@ import {
   objectToRows,
   parseSampleFormJson,
   rowsToObject,
-} from './sampleFormTestUtils.js'
+  type FormRow,
+} from '../../workflow/sampleFormTestUtils.js'
 
-/**
- * @param {{
- *   mode: 'simple' | 'advanced'
- *   onModeChange: (m: 'simple' | 'advanced') => void
- *   simpleRows: { id: string, key: string, value: string }[]
- *   onSimpleRowsChange: (rows: { id: string, key: string, value: string }[]) => void
- *   sampleFormJson: string
- *   onSampleFormJsonChange: (s: string) => void
- *   error: string | null
- *   onClearError: () => void
- *   onReportError: (message: string) => void
- *   onRun: () => void
- *   testing: boolean
- * }} props
- */
+interface SampleFormTestDataProps {
+  mode: 'simple' | 'advanced'
+  onModeChange: (m: 'simple' | 'advanced') => void
+  simpleRows: FormRow[]
+  onSimpleRowsChange: (rows: FormRow[]) => void
+  sampleFormJson: string
+  onSampleFormJsonChange: (s: string) => void
+  error: string | null
+  onClearError: () => void
+  onReportError: (message: string) => void
+  onRun: () => void
+  testing: boolean
+}
+
 export function SampleFormTestData({
   mode,
   onModeChange,
@@ -34,7 +34,7 @@ export function SampleFormTestData({
   onReportError,
   onRun,
   testing,
-}) {
+}: SampleFormTestDataProps) {
   function switchToAdvanced() {
     onClearError()
     onSampleFormJsonChange(JSON.stringify(rowsToObject(simpleRows), null, 2))
@@ -52,7 +52,7 @@ export function SampleFormTestData({
     onModeChange('simple')
   }
 
-  function updateRow(id, patch) {
+  function updateRow(id: string, patch: Partial<FormRow>) {
     onSimpleRowsChange(simpleRows.map((row) => (row.id === id ? { ...row, ...patch } : row)))
   }
 
@@ -60,7 +60,7 @@ export function SampleFormTestData({
     onSimpleRowsChange([...simpleRows, { id: newStepId(), key: '', value: '' }])
   }
 
-  function removeRow(id) {
+  function removeRow(id: string) {
     if (simpleRows.length <= 1) {
       onSimpleRowsChange([{ id: simpleRows[0].id, key: '', value: '' }])
       return
@@ -77,8 +77,7 @@ export function SampleFormTestData({
   return (
     <>
       <p className="iw-card-desc iw-desc-tight">
-        Pretend values for a real form submission. Steps use them in placeholders like{' '}
-        <code className="iw-inline-code">{'{{form.email}}'}</code>.
+        Pretend values for a form submission — used to preview what each step will do.
       </p>
 
       <div className="test-data-mode" role="tablist" aria-label="How to edit test data">
@@ -98,15 +97,15 @@ export function SampleFormTestData({
           className={`test-data-mode-btn${mode === 'advanced' ? ' is-active' : ''}`}
           onClick={() => (mode === 'simple' ? switchToAdvanced() : undefined)}
         >
-          JSON (advanced)
+          JSON
         </button>
       </div>
 
       {mode === 'simple' ? (
         <div className="sample-form-simple">
           <div className="sample-form-simple-toolbar">
-            <button type="button" className="btn btn-ghost btn-small" onClick={resetExample}>
-              Reset to example
+            <button type="button" className="link-btn" onClick={resetExample}>
+              Reset example
             </button>
           </div>
           <ul className="sample-form-list">
@@ -114,96 +113,80 @@ export function SampleFormTestData({
               <li key={row.id} className="sample-form-card">
                 <div className="sample-form-card-fields">
                   <div>
-                    <label className="field-label field-label-compact" htmlFor={`sf-key-${row.id}`}>
+                    <label className="field-label field-label-compact" htmlFor={`sfk-${row.id}`}>
                       Field name
                     </label>
                     <input
-                      id={`sf-key-${row.id}`}
-                      className="field-input"
+                      id={`sfk-${row.id}`}
                       type="text"
-                      autoComplete="off"
-                      spellCheck={false}
-                      placeholder="e.g. email"
+                      className="field-input"
                       value={row.key}
-                      onChange={(e) => {
-                        onClearError()
-                        updateRow(row.id, { key: e.target.value })
-                      }}
+                      placeholder="e.g. email"
+                      autoComplete="off"
+                      onChange={(e) => updateRow(row.id, { key: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="field-label field-label-compact" htmlFor={`sf-val-${row.id}`}>
+                    <label className="field-label field-label-compact" htmlFor={`sfv-${row.id}`}>
                       Value
                     </label>
                     <input
-                      id={`sf-val-${row.id}`}
-                      className="field-input"
+                      id={`sfv-${row.id}`}
                       type="text"
-                      autoComplete="off"
+                      className="field-input"
                       value={row.value}
-                      onChange={(e) => {
-                        onClearError()
-                        updateRow(row.id, { value: e.target.value })
-                      }}
+                      placeholder="e.g. alex@example.com"
+                      autoComplete="off"
+                      onChange={(e) => updateRow(row.id, { value: e.target.value })}
                     />
                   </div>
                 </div>
                 <div className="sample-form-card-actions">
                   <button
                     type="button"
-                    className="icon-text-btn danger sample-form-remove"
-                    title={simpleRows.length <= 1 ? 'Clear row' : 'Remove field'}
-                    onClick={() => {
-                      onClearError()
-                      removeRow(row.id)
-                    }}
+                    className="link-btn danger sample-form-remove"
+                    onClick={() => removeRow(row.id)}
                   >
-                    <Trash2 size={14} aria-hidden />
-                    {simpleRows.length <= 1 ? 'Clear' : 'Remove'}
+                    <Trash2 size={12} aria-hidden /> Remove
                   </button>
                 </div>
               </li>
             ))}
           </ul>
           <button type="button" className="btn btn-secondary btn-add-field" onClick={addRow}>
-            <Plus size={16} strokeWidth={2.5} aria-hidden />
-            Add field
+            <Plus size={14} aria-hidden /> Add field
           </button>
-          <p className="iw-footnote sample-form-footnote">
-            Names must match what you use in steps (e.g. <code className="iw-inline-code">email</code> for{' '}
-            <code className="iw-inline-code">{'{{form.email}}'}</code>).
-          </p>
         </div>
       ) : (
         <div className="sample-form-advanced">
           <label className="field-label" htmlFor="sample-form-json">
-            Raw JSON
+            JSON object
           </label>
           <textarea
             id="sample-form-json"
-            className="field-input field-textarea field-json-editor"
-            rows={7}
-            spellCheck={false}
+            className="field-input field-textarea field-json-editor field-textarea-compact"
+            rows={6}
             value={sampleFormJson}
-            onChange={(e) => {
-              onClearError()
-              onSampleFormJsonChange(e.target.value)
-            }}
+            spellCheck={false}
+            onChange={(e) => onSampleFormJsonChange(e.target.value)}
           />
-          <p className="iw-footnote">
-            Switch back to <strong>Form fields</strong> after fixing JSON — invalid JSON cannot be converted.
+          {error && <p className="field-error">{error}</p>}
+          <p className="iw-footnote sample-form-footnote">
+            Keys become the field names you can insert as form answers.
           </p>
         </div>
       )}
 
-      {error && (
-        <p className="field-error" role="alert">
-          {error}
-        </p>
-      )}
+      {mode === 'simple' && error && <p className="field-error">{error}</p>}
 
-      <button type="button" className="btn btn-primary btn-test-run" disabled={testing} onClick={onRun}>
-        {testing ? 'Running…' : 'Run workflow'}
+      <button
+        type="button"
+        className="btn btn-secondary btn-test-run"
+        disabled={testing}
+        onClick={onRun}
+        style={{ width: '100%' }}
+      >
+        {testing ? 'Running…' : 'Run test'}
       </button>
     </>
   )

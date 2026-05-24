@@ -1,27 +1,37 @@
 import { getActionDefinition } from './actions/index.js'
+import type { Workflow } from './workflow/model.js'
 
-/**
- * @typedef {{ stepId: string, type: string, label: string, ok: boolean, message: string, ms: number, detail?: unknown, skipped?: boolean }} StepRunResult
- * @typedef {{ ok: boolean, results: StepRunResult[], stoppedAt?: number }} RunReport
- */
+export interface StepRunResult {
+  stepId: string
+  type: string
+  label: string
+  ok: boolean
+  message: string
+  ms: number
+  detail?: unknown
+  skipped?: boolean
+}
 
-function conditionPassFromDetail(detail) {
+export interface RunReport {
+  ok: boolean
+  results: StepRunResult[]
+  stoppedAt?: number
+}
+
+function conditionPassFromDetail(detail: unknown): boolean | undefined {
   if (!detail || typeof detail !== 'object') return undefined
-  const p = /** @type {Record<string, unknown>} */ (detail).pass
+  const p = (detail as Record<string, unknown>).pass
   return typeof p === 'boolean' ? p : undefined
 }
 
-export async function runWorkflow(workflow, options = {}) {
-  /** @type {StepRunResult[]} */
-  const results = []
-
+export async function runWorkflow(workflow: Workflow, options: { form?: Record<string, string> } = {}): Promise<RunReport> {
+  const results: StepRunResult[] = []
   const form = normalizeForm(options.form)
 
   if (!workflow.steps.length) {
     return { ok: true, results }
   }
 
-  /** @type {{ form: Record<string, string> }} */
   const ctx = { form }
 
   let skipNext = false
@@ -106,11 +116,10 @@ export async function runWorkflow(workflow, options = {}) {
   return { ok: !anyFailed, results }
 }
 
-function normalizeForm(form) {
+function normalizeForm(form: Record<string, string> | undefined): Record<string, string> {
   if (!form || typeof form !== 'object') return {}
-  /** @type {Record<string, string>} */
-  const out = {}
-  for (const [k, v] of Object.entries(/** @type {Record<string, unknown>} */ (form))) {
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(form)) {
     out[k] = v == null ? '' : String(v)
   }
   return out
